@@ -1,3 +1,4 @@
+import textwrap
 from ..language.printer import print_ast
 from ..type.definition import (
     GraphQLEnumType,
@@ -133,8 +134,8 @@ def _print_object(type):
         else ""
     )
 
-    return ("type {}{} {{\n" "{}\n" "}}").format(
-        type.name, implemented_interfaces, _print_fields(type)
+    return ("{}type {}{} {{\n" "{}\n" "}}").format(
+        _print_description(type), type.name, implemented_interfaces, _print_fields(type)
     )
 
 
@@ -166,10 +167,18 @@ def _print_input_object(type):
     )
 
 
+def _print_description(arg):
+    # type: (Union[GraphQLObjectType, GraphQLInterfaceType]) -> str
+    if arg.description:
+        description = textwrap.fill(arg.description, tabsize=2, initial_indent="# ", subsequent_indent="# ", expand_tabs=True)
+        return f'  {description}\n'
+    return ""
+
+
 def _print_fields(type):
     # type: (Union[GraphQLObjectType, GraphQLInterfaceType]) -> str
     return "\n".join(
-        "  {}{}: {}{}".format(f_name, _print_args(f), f.type, _print_deprecated(f))
+        f'  {_print_description(f)}  {f_name}{_print_args(f)}: {f.type}{_print_deprecated(f)}'
         for f_name, f in type.fields.items()
     )
 
@@ -206,7 +215,7 @@ def _print_input_value(name, arg):
     else:
         default_value = ""
 
-    return "{}: {}{}".format(name, arg.type, default_value)
+    return f"{_print_description(arg)}  {name}: {arg.type}{default_value}"
 
 
 def _print_directive(directive):
